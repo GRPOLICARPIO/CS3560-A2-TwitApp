@@ -6,23 +6,29 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-// twituser class represents a user in the twitapp
+// twitUser class represents a user in the TwitApp
 class TwitUser {
-    String id;
-    List<TwitUser> followers;
-    List<TwitUser> followings;
-    List<String> newsFeed;
-    DefaultListModel<String> newsFeedModel;
+    String id; // user's ID
+    List<TwitUser> followers; // list of followers
+    List<TwitUser> followings; // list of followings
+    List<String> newsFeed; // list of tweets in news feed
+    DefaultListModel<String> newsFeedModel; // model for the news feed list
+    long creationTime; // when the user was created
+    long lastUpdateTime; // when the user was last updated
 
-    // constructor for twituser class
+    // constructor for TwitUser class
     public TwitUser(String id) {
-        this.id = id;
-        this.followers = new ArrayList<>();
-        this.followings = new ArrayList<>();
-        this.newsFeed = new ArrayList<>();
-        this.newsFeedModel = new DefaultListModel<>();
+        this.id = id; // set the user's ID
+        this.followers = new ArrayList<>(); // initialize followers list
+        this.followings = new ArrayList<>(); // initialize followings list
+        this.newsFeed = new ArrayList<>(); // initialize news feed list
+        this.newsFeedModel = new DefaultListModel<>(); // initialize news feed model
+        this.creationTime = System.currentTimeMillis(); // set creation time to current time
+        this.lastUpdateTime = this.creationTime; // set last update time to creation time
     }
 
     // get user id
@@ -57,11 +63,14 @@ class TwitUser {
 
     // post a tweet to the user's news feed and notify followers
     public void postTweet(String tweet) {
-        newsFeed.add(tweet);
-        newsFeedModel.addElement(tweet);
+        long currentTime = System.currentTimeMillis(); // get current time
+        newsFeed.add(tweet); // add tweet to news feed
+        newsFeedModel.addElement(tweet); // add tweet to news feed model
+        this.lastUpdateTime = currentTime; // update last update time
         for (TwitUser follower : followers) {
-            follower.getNewsFeed().add(tweet);
-            follower.newsFeedModel.addElement(tweet);
+            follower.getNewsFeed().add(tweet); // add tweet to follower's news feed
+            follower.newsFeedModel.addElement(tweet); // add tweet to follower's news feed model
+            follower.lastUpdateTime = currentTime; // update follower's last update time
         }
     }
 
@@ -71,15 +80,17 @@ class TwitUser {
     }
 }
 
-// twitusergroup class represents a group of users
+// twitUserGroup class represents a group of users
 class TwitUserGroup {
-    String id;
-    List<Object> members;
+    String id; // group's ID
+    List<Object> members; // list of members in the group
+    long creationTime; // when the group was created
 
-    // constructor for twitusergroup class
+    // constructor for TwitUserGroup class
     public TwitUserGroup(String id) {
-        this.id = id;
-        this.members = new ArrayList<>();
+        this.id = id; // set the group's ID
+        this.members = new ArrayList<>(); // initialize members list
+        this.creationTime = System.currentTimeMillis(); // set creation time to current time
     }
 
     // get group id
@@ -103,61 +114,61 @@ class TwitUserGroup {
     }
 }
 
-// twitapp class is the main class for the twitapp
+// twitApp class is the main class for the TwitApp
 public class TwitApp {
-    private static TwitApp instance;
-    private TwitUserGroup rootGroup;
-    private DefaultMutableTreeNode rootNode;
-    private DefaultTreeModel treeModel;
+    private static TwitApp instance; // singleton instance
+    private TwitUserGroup rootGroup; // root group
+    private DefaultMutableTreeNode rootNode; // root node for the tree
+    private DefaultTreeModel treeModel; // model for the tree
 
-    // constructor for twitapp class
+    // constructor for TwitApp class
     private TwitApp() {
-        this.rootGroup = new TwitUserGroup("Root");
-        this.rootNode = new DefaultMutableTreeNode(rootGroup);
-        this.treeModel = new DefaultTreeModel(rootNode);
+        this.rootGroup = new TwitUserGroup("Root"); // initialize root group
+        this.rootNode = new DefaultMutableTreeNode(rootGroup); // initialize root node
+        this.treeModel = new DefaultTreeModel(rootNode); // initialize tree model
     }
 
     // singleton instance getter
     public static TwitApp getInstance() {
         if (instance == null) {
-            instance = new TwitApp();
+            instance = new TwitApp(); // create instance if it doesn't exist
         }
         return instance;
     }
 
     // add a user to a group and update the tree view
     public void addUser(TwitUser user, TwitUserGroup group) {
-        group.addMember(user);
-        DefaultMutableTreeNode groupNode = findNode(rootNode, group);
+        group.addMember(user); // add user to the group
+        DefaultMutableTreeNode groupNode = findNode(rootNode, group); // find the group's node
         if (groupNode != null) {
-            groupNode.add(new DefaultMutableTreeNode(user));
-            treeModel.reload();
+            groupNode.add(new DefaultMutableTreeNode(user)); // add user node to the group node
+            treeModel.reload(); // reload the tree model
         }
     }
 
     // add a group to a parent group and update the tree view
     public void addGroup(TwitUserGroup group, TwitUserGroup parentGroup) {
-        parentGroup.addMember(group);
-        DefaultMutableTreeNode parentNode = findNode(rootNode, parentGroup);
+        parentGroup.addMember(group); // add group to the parent group
+        DefaultMutableTreeNode parentNode = findNode(rootNode, parentGroup); // find the parent group's node
         if (parentNode != null) {
-            parentNode.add(new DefaultMutableTreeNode(group));
-            treeModel.reload();
+            parentNode.add(new DefaultMutableTreeNode(group)); // add group node to the parent node
+            treeModel.reload(); // reload the tree model
         }
     }
 
     // find a node in the tree by user/group object
     private DefaultMutableTreeNode findNode(DefaultMutableTreeNode root, Object target) {
         if (root.getUserObject().equals(target)) {
-            return root;
+            return root; // return the node if it matches the target
         }
         for (int i = 0; i < root.getChildCount(); i++) {
             DefaultMutableTreeNode child = (DefaultMutableTreeNode) root.getChildAt(i);
             DefaultMutableTreeNode node = findNode(child, target);
             if (node != null) {
-                return node;
+                return node; // return the found node
             }
         }
-        return null;
+        return null; // return null if not found
     }
 
     // display the admin control panel
@@ -175,6 +186,8 @@ public class TwitApp {
         JButton showTotalTweetsButton = new JButton("Total Tweets");
         JButton showPositiveTweetsButton = new JButton("Positive Tweets");
         JButton openUserViewButton = new JButton("Open User View");
+        JButton validateIDsButton = new JButton("Validate IDs");
+        JButton lastUpdateUserButton = new JButton("Last Update User");
 
         JTree userTree = new JTree(treeModel);
         JScrollPane treeScrollPane = new JScrollPane(userTree);
@@ -223,7 +236,7 @@ public class TwitApp {
         constraints.weighty = 1.0;
         panel.add(treeScrollPane, constraints);
 
-        // add new button to the layout
+        // add new buttons to the layout
         constraints.gridx = 0;
         constraints.gridy++;
         constraints.gridwidth = 1;
@@ -232,15 +245,23 @@ public class TwitApp {
         constraints.weighty = 0;
         panel.add(openUserViewButton, constraints);
 
-        // event listeners for buttons
+        constraints.gridx++;
+        panel.add(validateIDsButton, constraints);
+
+        constraints.gridx++;
+        panel.add(lastUpdateUserButton, constraints);
+
+        // add action listeners for buttons
         createUserButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String userId = userIdTextField.getText().trim();
                 if (!userId.isEmpty()) {
                     TwitUser newUser = new TwitUser(userId);
-                    addUser(newUser, rootGroup); // adding to rootgroup (could be improved)
+                    addUser(newUser, rootGroup);
                     userIdTextField.setText("");
+                } else {
+                    JOptionPane.showMessageDialog(frame, "User ID cannot be empty.");
                 }
             }
         });
@@ -251,8 +272,10 @@ public class TwitApp {
                 String groupId = groupIdTextField.getText().trim();
                 if (!groupId.isEmpty()) {
                     TwitUserGroup newGroup = new TwitUserGroup(groupId);
-                    addGroup(newGroup, rootGroup); // adding to rootgroup (could be improved)
+                    addGroup(newGroup, rootGroup);
                     groupIdTextField.setText("");
+                } else {
+                    JOptionPane.showMessageDialog(frame, "Group ID cannot be empty.");
                 }
             }
         });
@@ -284,10 +307,8 @@ public class TwitApp {
         showPositiveTweetsButton.addActionListener(new ActionListener() {
             @Override
             public void actionPerformed(ActionEvent e) {
-                int totalTweets = countTotalTweets(rootGroup);
-                int positiveTweets = countPositiveTweets(rootGroup);
-                double percentage = (totalTweets == 0 ? 0 : (double) positiveTweets * 100.0 / totalTweets);
-                JOptionPane.showMessageDialog(frame, "Positive Tweets: " + String.format("%.2f", percentage) + "%");
+                int totalPositiveTweets = countTotalPositiveTweets(rootGroup);
+                JOptionPane.showMessageDialog(frame, "Total Positive Tweets: " + totalPositiveTweets);
             }
         });
 
@@ -297,24 +318,86 @@ public class TwitApp {
                 TreePath selectedPath = userTree.getSelectionPath();
                 if (selectedPath != null) {
                     DefaultMutableTreeNode selectedNode = (DefaultMutableTreeNode) selectedPath.getLastPathComponent();
-                    if (selectedNode.getUserObject() instanceof TwitUser) {
-                        TwitUser user = (TwitUser) selectedNode.getUserObject();
-                        displayUserView(user);
+                    Object userObject = selectedNode.getUserObject();
+                    if (userObject instanceof TwitUser) {
+                        TwitUser selectedUser = (TwitUser) userObject;
+                        displayUserView(selectedUser);
                     } else {
                         JOptionPane.showMessageDialog(frame, "Please select a user.");
                     }
+                }
+            }
+        });
+
+        validateIDsButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                boolean areIdsValid = validateIds(rootGroup);
+                if (areIdsValid) {
+                    JOptionPane.showMessageDialog(frame, "All IDs are unique.");
                 } else {
-                    JOptionPane.showMessageDialog(frame, "No user selected.");
+                    JOptionPane.showMessageDialog(frame, "Duplicate IDs found.");
+                }
+            }
+        });
+
+        lastUpdateUserButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String lastUpdateUserId = getLastUpdateUserId(rootGroup);
+                if (lastUpdateUserId != null) {
+                    JOptionPane.showMessageDialog(frame, "Last Update User ID: " + lastUpdateUserId);
+                } else {
+                    JOptionPane.showMessageDialog(frame, "No users found.");
                 }
             }
         });
 
         frame.add(panel);
         frame.pack();
+        frame.setLocationRelativeTo(null);
         frame.setVisible(true);
     }
 
-    // count total users in a group
+    // display the user view
+    private void displayUserView(TwitUser user) {
+        JFrame frame = new JFrame("User View - " + user.getId());
+        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+        frame.setLayout(new BorderLayout());
+
+        DefaultListModel<String> newsFeedModel = user.newsFeedModel;
+        JList<String> newsFeedList = new JList<>(newsFeedModel);
+
+        JTextField tweetTextField = new JTextField();
+        JButton postTweetButton = new JButton("Post Tweet");
+
+        JLabel creationTimeLabel = new JLabel("Creation Time: " + user.creationTime);
+        JLabel lastUpdateTimeLabel = new JLabel("Last Update Time: " + user.lastUpdateTime);
+
+        frame.add(new JScrollPane(newsFeedList), BorderLayout.CENTER);
+        frame.add(tweetTextField, BorderLayout.SOUTH);
+        frame.add(postTweetButton, BorderLayout.EAST);
+        frame.add(creationTimeLabel, BorderLayout.NORTH);
+        frame.add(lastUpdateTimeLabel, BorderLayout.WEST);
+
+        postTweetButton.addActionListener(new ActionListener() {
+            @Override
+            public void actionPerformed(ActionEvent e) {
+                String tweet = tweetTextField.getText().trim();
+                if (!tweet.isEmpty()) {
+                    user.postTweet(tweet);
+                    tweetTextField.setText("");
+                    lastUpdateTimeLabel.setText("Last Update Time: " + user.lastUpdateTime);
+                }
+            }
+        });
+
+        frame.setSize(400, 300);
+        frame.setLocationRelativeTo(null);
+        frame.setVisible(true);
+    }
+
+    // count total users in the group
     private int countTotalUsers(TwitUserGroup group) {
         int count = 0;
         for (Object member : group.getMembers()) {
@@ -327,9 +410,9 @@ public class TwitApp {
         return count;
     }
 
-    // count total groups in a group
+    // count total groups in the group
     private int countTotalGroups(TwitUserGroup group) {
-        int count = 1; // count the group itself
+        int count = 1; // count the current group
         for (Object member : group.getMembers()) {
             if (member instanceof TwitUserGroup) {
                 count += countTotalGroups((TwitUserGroup) member);
@@ -338,7 +421,7 @@ public class TwitApp {
         return count;
     }
 
-    // count total tweets in a group
+    // count total tweets in the group
     private int countTotalTweets(TwitUserGroup group) {
         int count = 0;
         for (Object member : group.getMembers()) {
@@ -351,38 +434,93 @@ public class TwitApp {
         return count;
     }
 
-    // count positive tweets in a group
-    private int countPositiveTweets(TwitUserGroup group) {
+    // count total positive tweets in the group
+    private int countTotalPositiveTweets(TwitUserGroup group) {
         int count = 0;
+        Set<String> positiveWords = new HashSet<>();
+        positiveWords.add("good");
+        positiveWords.add("great");
+        positiveWords.add("excellent");
+        positiveWords.add("happy");
+        positiveWords.add("positive");
+
         for (Object member : group.getMembers()) {
             if (member instanceof TwitUser) {
-                List<String> newsFeed = ((TwitUser) member).getNewsFeed();
-                for (String tweet : newsFeed) {
-                    if (tweet.contains("good") || tweet.contains("great") || tweet.contains("excellent")) {
-                        count++;
+                for (String tweet : ((TwitUser) member).getNewsFeed()) {
+                    String[] words = tweet.split("\\s+");
+                    for (String word : words) {
+                        if (positiveWords.contains(word.toLowerCase())) {
+                            count++;
+                            break;
+                        }
                     }
                 }
             } else if (member instanceof TwitUserGroup) {
-                count += countPositiveTweets((TwitUserGroup) member);
+                count += countTotalPositiveTweets((TwitUserGroup) member);
             }
         }
         return count;
     }
 
-    // find user by id
-    private TwitUser findUserById(String id) {
-        return findUserById(id, rootGroup);
+    // validate IDs for uniqueness
+    private boolean validateIds(TwitUserGroup group) {
+        Set<String> ids = new HashSet<>();
+        return collectIds(group, ids);
     }
 
-    // helper method to find user by id in a group
-    private TwitUser findUserById(String id, TwitUserGroup group) {
+    // collect IDs for uniqueness validation
+    private boolean collectIds(TwitUserGroup group, Set<String> ids) {
+        if (!ids.add(group.getId())) {
+            return false; // duplicate ID found
+        }
         for (Object member : group.getMembers()) {
             if (member instanceof TwitUser) {
-                if (((TwitUser) member).getId().equals(id)) {
-                    return (TwitUser) member;
+                if (!ids.add(((TwitUser) member).getId())) {
+                    return false; // duplicate ID found
                 }
             } else if (member instanceof TwitUserGroup) {
-                TwitUser user = findUserById(id, (TwitUserGroup) member);
+                if (!collectIds((TwitUserGroup) member, ids)) {
+                    return false; // duplicate ID found
+                }
+            }
+        }
+        return true;
+    }
+
+    // get the ID of the user with the most recent update
+    private String getLastUpdateUserId(TwitUserGroup group) {
+        long latestUpdateTime = 0;
+        String lastUpdateUserId = null;
+
+        for (Object member : group.getMembers()) {
+            if (member instanceof TwitUser) {
+                TwitUser user = (TwitUser) member;
+                if (user.lastUpdateTime > latestUpdateTime) {
+                    latestUpdateTime = user.lastUpdateTime;
+                    lastUpdateUserId = user.getId();
+                }
+            } else if (member instanceof TwitUserGroup) {
+                String groupLastUpdateUserId = getLastUpdateUserId((TwitUserGroup) member);
+                TwitUser groupLastUpdateUser = findUserById(rootGroup, groupLastUpdateUserId);
+                if (groupLastUpdateUser != null && groupLastUpdateUser.lastUpdateTime > latestUpdateTime) {
+                    latestUpdateTime = groupLastUpdateUser.lastUpdateTime;
+                    lastUpdateUserId = groupLastUpdateUser.getId();
+                }
+            }
+        }
+        return lastUpdateUserId;
+    }
+
+    // find a user by ID in the group
+    private TwitUser findUserById(TwitUserGroup group, String userId) {
+        for (Object member : group.getMembers()) {
+            if (member instanceof TwitUser) {
+                TwitUser user = (TwitUser) member;
+                if (user.getId().equals(userId)) {
+                    return user;
+                }
+            } else if (member instanceof TwitUserGroup) {
+                TwitUser user = findUserById((TwitUserGroup) member, userId);
                 if (user != null) {
                     return user;
                 }
@@ -391,120 +529,13 @@ public class TwitApp {
         return null;
     }
 
-    // display the user view for a user
-    public void displayUserView(TwitUser user) {
-        JFrame frame = new JFrame("User View - " + user.getId());
-        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-
-        // create components
-        JLabel userIdLabel = new JLabel("User: " + user.getId());
-        DefaultListModel<String> newsFeedModel = user.newsFeedModel;
-        JList<String> newsFeedList = new JList<>(newsFeedModel);
-        JScrollPane newsFeedScrollPane = new JScrollPane(newsFeedList);
-
-        DefaultListModel<String> followingsModel = new DefaultListModel<>();
-        for (TwitUser following : user.getFollowings()) {
-            followingsModel.addElement(following.getId());
-        }
-        JList<String> followingsList = new JList<>(followingsModel);
-        JScrollPane followingsScrollPane = new JScrollPane(followingsList);
-
-        JTextField followUserTextField = new JTextField(20);
-        JButton followUserButton = new JButton("Follow");
-
-        JTextField tweetTextField = new JTextField(20);
-        JButton postTweetButton = new JButton("Post Tweet");
-
-        // set layout and add components
-        JPanel panel = new JPanel(new GridBagLayout());
-        GridBagConstraints constraints = new GridBagConstraints();
-        constraints.gridx = 0;
-        constraints.gridy = 0;
-        constraints.anchor = GridBagConstraints.WEST;
-        constraints.insets = new Insets(5, 5, 5, 5);
-
-        panel.add(userIdLabel, constraints);
-
-        constraints.gridy++;
-        constraints.fill = GridBagConstraints.BOTH;
-        constraints.weightx = 1.0;
-        constraints.weighty = 1.0;
-        panel.add(new JLabel("News Feed:"), constraints);
-        constraints.gridy++;
-        panel.add(newsFeedScrollPane, constraints);
-
-        constraints.gridy++;
-        constraints.fill = GridBagConstraints.NONE;
-        constraints.weightx = 0.0;
-        constraints.weighty = 0.0;
-        panel.add(new JLabel("Followings:"), constraints);
-        constraints.gridy++;
-        constraints.fill = GridBagConstraints.BOTH;
-        constraints.weightx = 1.0;
-        constraints.weighty = 1.0;
-        panel.add(followingsScrollPane, constraints);
-
-        constraints.gridy++;
-        constraints.fill = GridBagConstraints.HORIZONTAL;
-        constraints.weightx = 0.0;
-        constraints.weighty = 0.0;
-        panel.add(followUserTextField, constraints);
-        constraints.gridx++;
-        panel.add(followUserButton, constraints);
-
-        constraints.gridx = 0;
-        constraints.gridy++;
-        constraints.fill = GridBagConstraints.HORIZONTAL;
-        constraints.weightx = 0.0;
-        constraints.weighty = 0.0;
-        panel.add(tweetTextField, constraints);
-        constraints.gridx++;
-        panel.add(postTweetButton, constraints);
-
-        // event listener for post tweet button
-        postTweetButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String tweet = tweetTextField.getText().trim();
-                if (!tweet.isEmpty()) {
-                    user.postTweet(tweet);
-                    tweetTextField.setText("");
-                }
-            }
-        });
-
-        // event listener for follow user button
-        followUserButton.addActionListener(new ActionListener() {
-            @Override
-            public void actionPerformed(ActionEvent e) {
-                String followUserId = followUserTextField.getText().trim();
-                if (!followUserId.isEmpty()) {
-                    TwitUser followUser = findUserById(followUserId);
-                    if (followUser != null) {
-                        user.addFollowing(followUser);
-                        followUser.addFollower(user);
-                        followingsModel.addElement(followUser.getId());
-                        followUserTextField.setText("");
-                    } else {
-                        JOptionPane.showMessageDialog(frame, "User not found.");
-                    }
-                }
-            }
-        });
-
-        frame.add(panel);
-        frame.pack();
-        frame.setVisible(true);
-    }
-
-    // main method to run the application
     public static void main(String[] args) {
         SwingUtilities.invokeLater(new Runnable() {
             @Override
             public void run() {
-                TwitApp app = TwitApp.getInstance();
-                app.displayAdminControlPanel();
+                TwitApp.getInstance().displayAdminControlPanel();
             }
         });
     }
 }
+
